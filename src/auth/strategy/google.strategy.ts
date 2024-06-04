@@ -1,14 +1,12 @@
-import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
-import { Profile, Strategy, VerifyCallback } from 'passport-google-oauth20';
+import { Strategy, VerifyCallback } from 'passport-google-oauth20';
 
-@Injectable()
 export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   constructor() {
     super({
       clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_API_KEY,
-      callbackURL: process.env.LOCAL_GOOGLE_LOGIN_CB,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: '/auth/oauth2/redirect/google', // 이 부분은 구글 콘솔에서 설정한대로. 승인된 리디렉션 URI
       scope: ['email', 'profile'],
     });
   }
@@ -16,20 +14,23 @@ export class GoogleStrategy extends PassportStrategy(Strategy, 'google') {
   async validate(
     accessToken: string,
     refreshToken: string,
-    profile: Profile,
+    profile: any,
     done: VerifyCallback,
   ) {
     try {
-      const { name, emails, id } = profile;
+      const { name, emails, photos } = profile;
+      console.log('🚀 🔶 GoogleStrategy 🔶 validate 🔶 profile:', profile);
       const user = {
-        provider: 'google',
-        providerId: id,
-        name: name,
         email: emails[0].value,
+        //firstName: name.familyName,
+        //lastName: name.givenName,
+        username: name.familyName + name.givenName,
+        photo: photos[0].value,
       };
-      return done(null, user);
+      console.log('🚀 🔶 GoogleStrategy 🔶 validate 🔶 user:', user);
+      done(null, user);
     } catch (error) {
-      return done(error);
+      done(error);
     }
   }
 }
