@@ -6,21 +6,25 @@ services:
     volumes:
       - .:/app
       - /app/node_modules
+    env_file:
+      - .prod.env
     environment:
-      - NODE_ENV=dev
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/ecommerce
+      - DATABASE_URL=postgres://${DATABASE_USER}:${DATABASE_PWD}@db:5432/ecommerce
     depends_on:
-      - db
+      - postgres
 
-  db:
+  postgres:
     image: postgres:13
     restart: always
     environment:
       POSTGRES_USER: ${DATABASE_USER}
       POSTGRES_PASSWORD: ${DATABASE_PWD}
       POSTGRES_DB: ecommerce
+    ports:
+      - '5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
+
 
 volumes:
   pgdata:

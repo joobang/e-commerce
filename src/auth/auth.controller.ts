@@ -1,4 +1,4 @@
-import { Controller, Get, Logger, Req, Res, UseGuards } from "@nestjs/common";
+import { Controller, Get, Logger, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guard/google.guard';
 import { JwtService } from '@nestjs/jwt';
@@ -27,7 +27,7 @@ export class AuthController {
   async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
     this.logger.log('GET oauth2/redirect/google - googleAuthRedirect 실행');
 
-    const { user } = req;
+    //const { user } = req;
     // 아이디가 존재하는지 확인
     // 없으면 가입
     // 있으면 로그인
@@ -36,8 +36,11 @@ export class AuthController {
     // if (adminUser === null) {
     //   adminUser = await this.authService.signUp(user); // DB에 저장
     // }
-    // const token = this.jwtService.sign(user); // 토큰 발급
-    // this.logger.debug(`token: ${JSON.stringify(token)}`);
+    const token = this.jwtService.sign({
+      email: 'test@gmail.com',
+      sub: 'test',
+    }); // 토큰 발급
+    this.logger.debug(`token: ${JSON.stringify(token)}`);
     return res.redirect(
       this.configService.get('GOOGLE_TARGET_URL') + '?token=' + 'token',
     );
