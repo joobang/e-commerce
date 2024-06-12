@@ -4,6 +4,7 @@ import { GoogleAuthGuard } from './guard/google.guard';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
+import { GoogleRequest } from './dto/google.user';
 
 @Controller('auth')
 export class AuthController {
@@ -24,23 +25,29 @@ export class AuthController {
 
   @Get('oauth2/redirect/google')
   @UseGuards(GoogleAuthGuard)
-  async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
+  async googleAuthRedirect(@Req() req: GoogleRequest, @Res() res: Response) {
     this.logger.log('GET oauth2/redirect/google - googleAuthRedirect 실행');
 
-    //const { user } = req;
+    const { user: googleUser } = req;
     // 아이디가 존재하는지 확인
     // 없으면 가입
     // 있으면 로그인
     // accessToken 발급  (jwt)
-    // let adminUser = await this.authService.getAdminUser(user.email);
-    // if (adminUser === null) {
-    //   adminUser = await this.authService.signUp(user); // DB에 저장
-    // }
+    let user = await this.authService.getUserByEmail(googleUser.email);
+    if (user === null) {
+      user = await this.authService.signUp({
+        name: googleUser.username,
+        email: googleUser.email,
+        profile_image: googleUser.photo,
+        password: '1234',
+      }); // DB에 저장
+    }
     const token = this.jwtService.sign({
-      email: 'test@gmail.com',
-      sub: 'test',
+      email: user.email,
     }); // 토큰 발급
-    this.logger.debug(`token: ${JSON.stringify(token)}`);
+    this.logger.debug(
+      `user : ${JSON.stringify(user)} token: ${JSON.stringify(token)}`,
+    );
     return res.redirect(
       this.configService.get('GOOGLE_TARGET_URL') + '?token=' + 'token',
     );
