@@ -8,11 +8,12 @@ import { GoogleAuthGuard } from '../../src/auth/guard/google.guard';
 import { ExecutionContext, INestApplication } from '@nestjs/common';
 import * as request from 'supertest';
 import { GoogleStrategy } from '../../src/auth/strategy/google.strategy';
+import * as passport from 'passport';
+import { NextFunction } from 'express';
 
 describe('AuthController (unit)', () => {
   let app: INestApplication;
   let authController: AuthController;
-  let googleAuthGuard: GoogleAuthGuard;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -23,20 +24,11 @@ describe('AuthController (unit)', () => {
         JwtService,
         ConfigService,
         GoogleStrategy,
-        {
-          provide: GoogleAuthGuard,
-          useValue: {
-            canActivate: jest.fn((context: ExecutionContext) => {
-              return true;
-            }),
-          },
-        },
+        GoogleAuthGuard,
       ],
     }).compile();
 
     authController = module.get<AuthController>(AuthController);
-    googleAuthGuard = module.get<GoogleAuthGuard>(GoogleAuthGuard);
-
     app = module.createNestApplication();
     await app.init();
   });
@@ -46,16 +38,12 @@ describe('AuthController (unit)', () => {
   });
 
   it('login/google : googleAuth', async () => {
-    const canActivateSpy = jest.spyOn(googleAuthGuard, 'canActivate');
-
-    //await authController.googleAuth();
-
     const response = await request(app.getHttpServer())
       .get('/auth/login/google')
       .expect(302);
 
-    expect(canActivateSpy).toHaveBeenCalled();
-    //expect(response.headers.location).toBe('/oauth2/redirect/google');
+    // response 헤더의 location이 Google 로그인 페이지로 리다이렉션되는지 확인
+    expect(response.headers.location).toContain('accounts.google.com');
   });
 
   afterAll(async () => {
