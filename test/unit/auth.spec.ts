@@ -158,3 +158,76 @@ describe('AuthController (unit)', () => {
     await app.close();
   });
 });
+describe('AuthService (unit)', () => {
+  let authService: AuthService; // AuthService 인스턴스
+  let prismaService: PrismaService; // PrismaService 인스턴스
+
+  // 모킹된 사용자 데이터
+  const user = {
+    id: 1,
+    name: 'Test User',
+    email: 'test@example.com',
+    profile_image: 'https://test.com/photo.jpg',
+    password: 'hashedpassword',
+    user_desc: null,
+  };
+
+  // 모킹된 UserDto 데이터
+  const userDto = {
+    name: 'Test User',
+    email: 'test@example.com',
+    profile_image: 'https://test.com/photo.jpg',
+    password: 'hashedpassword',
+    user_desc: null,
+  };
+  // 테스트 모듈 설정 및 Nest 애플리케이션 초기화
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        AuthService,
+        {
+          provide: PrismaService,
+          useValue: {
+            user: {
+              create: jest.fn().mockReturnValue(user),
+              findUnique: jest.fn().mockReturnValue(user),
+            },
+          },
+        },
+      ],
+    }).compile();
+
+    // 테스트를 위해 인스턴스를 가져온다.
+    authService = module.get<AuthService>(AuthService);
+    prismaService = module.get<PrismaService>(PrismaService);
+  });
+
+  describe('signUp()', () => {
+    it('should create a new user', async () => {
+      const result = await authService.signUp(userDto);
+      expect(result).toEqual(user);
+      expect(prismaService.user.create).toHaveBeenCalledWith({ data: userDto });
+    });
+  });
+
+  describe('getUserByEmail()', () => {
+    it('should return a user by email', async () => {
+      const result = await authService.getUserByEmail(user.email);
+      expect(result).toEqual(user);
+      expect(prismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { email: user.email },
+      });
+    });
+
+    it('should return null if user is not found', async () => {
+      jest.spyOn(prismaService.user, 'findUnique').mockResolvedValueOnce(null);
+      const result = await authService.getUserByEmail(
+        'nonexistent@example.com',
+      );
+      expect(result).toBeNull();
+      expect(prismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { email: 'nonexistent@example.com' },
+      });
+    });
+  });
+});
