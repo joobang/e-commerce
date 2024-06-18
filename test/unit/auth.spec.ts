@@ -10,6 +10,7 @@ import { GoogleStrategy } from '../../src/auth/strategy/google.strategy';
 import { GoogleRequest } from '../../src/auth/dto/google.user';
 import { Response } from 'express';
 import { INestApplication } from '@nestjs/common';
+import { UserDto } from "../../src/user/dto/user.dto";
 
 // Google 사용자 인터페이스 정의
 interface GoogleUser {
@@ -59,6 +60,11 @@ describe('AuthController (unit)', () => {
     user_desc: null,
   };
 
+  // 로그인 모킹 객체
+  const loginUser: Partial<UserDto> = {
+    email: 'test@example.com',
+  };
+
   // 테스트 모듈 설정 및 Nest 애플리케이션 초기화
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -93,7 +99,7 @@ describe('AuthController (unit)', () => {
   });
 
   // "login/google" 엔드포인트 테스트
-  describe('login/google : googleAuth', () => {
+  describe('GET /auth/login/google : googleAuth', () => {
     it('구글 로그인 설정 리다이렉트 주소로 이동', async () => {
       const response = await request(app.getHttpServer())
         .get('/auth/login/google')
@@ -105,7 +111,7 @@ describe('AuthController (unit)', () => {
   });
 
   // "oauth2/redirect/google" 엔드포인트 테스트
-  describe('oauth2/redirect/google : googleAuthRedirect', () => {
+  describe('GET /auth/oauth2/redirect/google : googleAuthRedirect', () => {
     // 각 테스트 케이스 실행 전에 수행할 설정
     beforeEach(async () => {
       // AuthService 메서드들을 모킹하여 반환값 설정
@@ -150,6 +156,27 @@ describe('AuthController (unit)', () => {
       expect(mockRes.redirect).toHaveBeenCalledWith(
         'https://google.com?token=token',
       );
+    });
+  });
+
+  describe('POST auth/login : login', () => {
+    it('로그인 (user.email) 실패', async () => {
+      jest.spyOn(authService, 'getUserByEmail').mockResolvedValueOnce(null);
+      const response = await authController.login(loginUser as UserDto);
+      expect(authService.getUserByEmail).toHaveBeenCalledWith(
+        'test@example.com',
+      );
+      expect(response.data).toBeNull();
+    });
+
+    it('로그인 (user.email) 성공', async () => {
+      // user 데이어 모킹
+      jest.spyOn(authService, 'getUserByEmail').mockResolvedValueOnce(user);
+      const response = await authController.login(loginUser as UserDto);
+      expect(authService.getUserByEmail).toHaveBeenCalledWith(
+        'test@example.com',
+      );
+      expect(response.data).toEqual(user);
     });
   });
 
