@@ -20,6 +20,8 @@ import {
   createErrorResponse,
   createSuccessResponse,
 } from '../common/helper/response.helper';
+import { User } from "@prisma/client";
+import { ApiResponseDto } from "../common/dto/apiResponse.dto";
 
 @Controller('auth')
 export class AuthController {
@@ -69,14 +71,20 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() userDto: UserDto) {
+  async login(@Body() userDto: UserDto): Promise<ApiResponseDto<UserDto>> {
     this.logger.log('POST auth/login');
-    //TODO: 로그인 요청, 로그인 요청 후 유저 확인, 있으면 결과 리턴 / 없으면 throw
+    //TODO: 로그인 요청시 비밀번호 확인
     const user = await this.authService.getUserByEmail(userDto.email);
     if (user) {
       return createSuccessResponse<UserDto>(user);
     } else {
       return createErrorResponse(400, 'not found user');
     }
+  }
+
+  @Post('signUp')
+  async signUp(@Body() userDto: UserDto) {
+    // TODO: 회원 가입 api, 비밀번호 해싱 비밀번호 확인 등등..
+    return;
   }
 }
