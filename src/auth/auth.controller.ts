@@ -1,13 +1,14 @@
 import {
-  BadRequestException, Body,
+  BadRequestException,
+  Body,
   Controller,
   Get,
   Logger,
   Post,
   Req,
   Res,
-  UseGuards
-} from "@nestjs/common";
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guard/google.guard';
 import { JwtService } from '@nestjs/jwt';
@@ -15,6 +16,10 @@ import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { GoogleRequest } from './dto/google.user';
 import { UserDto } from '../user/dto/user.dto';
+import {
+  createErrorResponse,
+  createSuccessResponse,
+} from '../common/helper/response.helper';
 
 @Controller('auth')
 export class AuthController {
@@ -69,13 +74,9 @@ export class AuthController {
     //TODO: 로그인 요청, 로그인 요청 후 유저 확인, 있으면 결과 리턴 / 없으면 throw
     const user = await this.authService.getUserByEmail(userDto.email);
     if (user) {
-      return {
-        status: 200,
-        data: '로그인 성공',
-        error: null,
-      };
+      return createSuccessResponse<UserDto>(user);
     } else {
-      throw new BadRequestException();
+      return createErrorResponse(400, 'not found user');
     }
   }
 }
