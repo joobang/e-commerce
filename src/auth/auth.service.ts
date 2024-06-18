@@ -15,7 +15,7 @@ export class AuthService {
   }
 
   async getUserByEmail(email: string): Promise<User | null> {
-    this.logger.log(`find by email : ${email})`);
+    this.logger.log(`find by email : ${email}`);
     return this.prisma.user.findUnique({ where: { email } });
   }
 }

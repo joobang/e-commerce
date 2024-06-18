@@ -1,10 +1,27 @@
-import { Controller, Get, Logger, Req, Res, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Get,
+  Logger,
+  Post,
+  Req,
+  Res,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guard/google.guard';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { GoogleRequest } from './dto/google.user';
+import { UserDto } from '../user/dto/user.dto';
+import {
+  createErrorResponse,
+  createSuccessResponse,
+} from '../common/helper/response.helper';
+import { User } from "@prisma/client";
+import { ApiResponseDto } from "../common/dto/apiResponse.dto";
 
 @Controller('auth')
 export class AuthController {
@@ -51,5 +68,23 @@ export class AuthController {
     return res.redirect(
       this.configService.get('GOOGLE_TARGET_URL') + '?token=' + 'token',
     );
+  }
+
+  @Post('login')
+  async login(@Body() userDto: UserDto): Promise<ApiResponseDto<UserDto>> {
+    this.logger.log('POST auth/login');
+    //TODO: 로그인 요청시 비밀번호 확인
+    const user = await this.authService.getUserByEmail(userDto.email);
+    if (user) {
+      return createSuccessResponse<UserDto>(user);
+    } else {
+      return createErrorResponse(400, 'not found user');
+    }
+  }
+
+  @Post('signUp')
+  async signUp(@Body() userDto: UserDto) {
+    // TODO: 회원 가입 api, 비밀번호 해싱 비밀번호 확인 등등..
+    return;
   }
 }
