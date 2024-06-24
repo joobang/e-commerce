@@ -4,7 +4,7 @@ import { PrismaService } from '../src/prisma/prisma.service';
 import * as request from 'supertest';
 import { AppModule } from '../src/app.module';
 
-describe('AuthController (e2e)', () => {
+describe('Auth (e2e)', () => {
   let app: INestApplication; // Nest 애플리케이션 인스턴스
   let prisma: PrismaService;
 
