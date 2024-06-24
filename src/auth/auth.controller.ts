@@ -15,13 +15,12 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { GoogleRequest } from './dto/google.user';
-import { UserDto } from '../user/dto/user.dto';
+import { UserCreateDto, UserInfoDto } from '../user/dto/user.dto';
 import {
   createErrorResponse,
   createSuccessResponse,
 } from '../common/helper/response.helper';
-import { User } from "@prisma/client";
-import { ApiResponseDto } from "../common/dto/apiResponse.dto";
+import { ApiResponseDto } from '../common/dto/apiResponse.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -71,20 +70,25 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() userDto: UserDto): Promise<ApiResponseDto<UserDto>> {
+  async login(
+    @Body() userInfoDto: UserInfoDto,
+  ): Promise<ApiResponseDto<UserInfoDto>> {
     this.logger.log('POST auth/login');
     //TODO: 로그인 요청시 비밀번호 확인
-    const user = await this.authService.getUserByEmail(userDto.email);
+    const user = await this.authService.getUserByEmail(userInfoDto.email);
     if (user) {
-      return createSuccessResponse<UserDto>(user);
+      return createSuccessResponse<UserInfoDto>(user);
     } else {
       return createErrorResponse(400, 'not found user');
     }
   }
 
   @Post('signUp')
-  async signUp(@Body() userDto: UserDto) {
+  async signUp(@Body() userCreateDto: UserCreateDto) {
     // TODO: 회원 가입 api, 비밀번호 해싱 비밀번호 확인 등등..
-    return;
+    const { password, passwordConfirm } = userCreateDto;
+    if (password !== passwordConfirm) {
+      return createErrorResponse(400, 'password & passwordConfirm check');
+    }
   }
 }
