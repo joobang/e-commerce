@@ -15,7 +15,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { GoogleRequest } from './dto/google.user';
-import { UserCreateDto, UserInfoDto } from '../user/dto/user.dto';
+import { toUser, UserCreateDto, UserInfoDto } from "../user/dto/user.dto";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -43,30 +43,29 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   async googleAuthRedirect(@Req() req: GoogleRequest, @Res() res: Response) {
     this.logger.log('GET oauth2/redirect/google - googleAuthRedirect 실행');
-
+    // TODO: 구글 로그인 시 바로 user 생성 -> 유저 정보 리턴으로 변경해야함.
     const { user: googleUser } = req;
     // 아이디가 존재하는지 확인
     // 없으면 가입
     // 있으면 로그인
     // accessToken 발급  (jwt)
     let user = await this.authService.getUserByEmail(googleUser.email);
-    if (user === null) {
-      user = await this.authService.signUp({
-        name: googleUser.username,
-        email: googleUser.email,
-        profile_image: googleUser.photo,
-        password: '1234',
-      }); // DB에 저장
-    }
-    const token = this.jwtService.sign({
-      email: user.email,
-    }); // 토큰 발급
-    this.logger.debug(
-      `user : ${JSON.stringify(user)} token: ${JSON.stringify(token)}`,
-    );
-    return res.redirect(
-      this.configService.get('GOOGLE_TARGET_URL') + '?token=' + 'token',
-    );
+    // if (user === null) {
+    //   user = await this.authService.signUp({
+    //     name: googleUser.username,
+    //     email: googleUser.email,
+    //     profile_image: googleUser.photo,
+    //   }); // DB에 저장
+    // }
+    // const token = this.jwtService.sign({
+    //   email: user.email,
+    // }); // 토큰 발급
+    // this.logger.debug(
+    //   `user : ${JSON.stringify(user)} token: ${JSON.stringify(token)}`,
+    // );
+    // return res.redirect(
+    //   this.configService.get('GOOGLE_TARGET_URL') + '?token=' + 'token',
+    // );
   }
 
   @Post('login')
@@ -83,12 +82,14 @@ export class AuthController {
     }
   }
 
-  @Post('signUp')
+  @Post('signup')
   async signUp(@Body() userCreateDto: UserCreateDto) {
     // TODO: 회원 가입 api, 비밀번호 해싱 비밀번호 확인 등등..
     const { password, passwordConfirm } = userCreateDto;
     if (password !== passwordConfirm) {
       return createErrorResponse(400, 'password & passwordConfirm check');
     }
+    const user = await this.authService.signUp(userCreateDto);
+    return createSuccessResponse<UserInfoDto>(user);
   }
 }
