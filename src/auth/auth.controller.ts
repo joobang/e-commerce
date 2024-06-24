@@ -4,7 +4,9 @@ import {
   Controller,
   Get,
   Logger,
+  Param,
   Post,
+  Query,
   Req,
   Res,
   UseGuards,
@@ -15,7 +17,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { GoogleRequest } from './dto/google.user';
-import { toUser, UserCreateDto, UserInfoDto } from "../user/dto/user.dto";
+import { toUser, UserCreateDto, UserInfoDto } from '../user/dto/user.dto';
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -49,7 +51,7 @@ export class AuthController {
     // 없으면 가입
     // 있으면 로그인
     // accessToken 발급  (jwt)
-    let user = await this.authService.getUserByEmail(googleUser.email);
+    const user = await this.authService.getUserByEmail(googleUser.email);
     // if (user === null) {
     //   user = await this.authService.signUp({
     //     name: googleUser.username,
@@ -83,13 +85,33 @@ export class AuthController {
   }
 
   @Post('signup')
-  async signUp(@Body() userCreateDto: UserCreateDto) {
-    // TODO: 회원 가입 api, 비밀번호 해싱 비밀번호 확인 등등..
+  async signUp(
+    @Body() userCreateDto: UserCreateDto,
+  ): Promise<ApiResponseDto<UserInfoDto>> {
     const { password, passwordConfirm } = userCreateDto;
     if (password !== passwordConfirm) {
       return createErrorResponse(400, 'password & passwordConfirm check');
     }
+    const checkUser = await this.authService.getUserByEmail(
+      userCreateDto.email,
+    );
+    if (checkUser) {
+      return createErrorResponse(400, 'user already exist');
+    }
+
     const user = await this.authService.signUp(userCreateDto);
     return createSuccessResponse<UserInfoDto>(user);
+  }
+
+  @Get('check-email')
+  async checkEmail(
+    @Req() req: Request,
+    @Query('email') email: string,
+  ): Promise<ApiResponseDto<boolean>> {
+    if (!email) {
+      return createErrorResponse(400, 'email is empty');
+    }
+    const user = await this.authService.getUserByEmail(email);
+    return createSuccessResponse<boolean>(!!user);
   }
 }
