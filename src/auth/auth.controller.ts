@@ -52,22 +52,22 @@ export class AuthController {
     // 있으면 로그인
     // accessToken 발급  (jwt)
     const user = await this.authService.getUserByEmail(googleUser.email);
-    // if (user === null) {
-    //   user = await this.authService.signUp({
-    //     name: googleUser.username,
-    //     email: googleUser.email,
-    //     profile_image: googleUser.photo,
-    //   }); // DB에 저장
-    // }
-    // const token = this.jwtService.sign({
-    //   email: user.email,
-    // }); // 토큰 발급
-    // this.logger.debug(
-    //   `user : ${JSON.stringify(user)} token: ${JSON.stringify(token)}`,
-    // );
-    // return res.redirect(
-    //   this.configService.get('GOOGLE_TARGET_URL') + '?token=' + 'token',
-    // );
+    if (!user) {
+      await this.authService.googleSignUp({
+        name: googleUser.username,
+        email: googleUser.email,
+        profile_image: googleUser.photo,
+      }); // DB에 저장
+    }
+    const token = this.jwtService.sign({
+      email: googleUser.email,
+    }); // 토큰 발급
+    this.logger.debug(
+      `user : ${JSON.stringify(user)} token: ${JSON.stringify(token)}`,
+    );
+    return res.redirect(
+      this.configService.get('GOOGLE_TARGET_URL') + '?token=' + token,
+    );
   }
 
   @Post('login')
@@ -75,7 +75,6 @@ export class AuthController {
     @Body() userLoginDto: UserLoginDto,
   ): Promise<ApiResponseDto<UserInfoDto>> {
     this.logger.log('POST auth/login');
-    //TODO: 로그인 요청시 비밀번호 확인
     const user = await this.authService.login(userLoginDto);
     if (user) {
       return createSuccessResponse<UserInfoDto>(user);

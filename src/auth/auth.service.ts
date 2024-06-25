@@ -19,11 +19,21 @@ export class AuthService {
     private cryptoService: CryptoService,
   ) {}
 
-  async signUp(data: UserCreateDto): Promise<User> {
+  async signUp(data: UserCreateDto): Promise<UserInfoDto> {
     this.logger.log(`create User : ${data.name}(${data.email})`);
-    data.password = await this.cryptoService.generateHash(data.password);
+    if (data.password != null) {
+      data.password = await this.cryptoService.generateHash(data.password);
+    }
     const user = toUser(data);
-    return this.prisma.user.create({ data: user });
+    const result = await this.prisma.user.create({ data: user });
+    return toUserInfo(result);
+  }
+
+  async googleSignUp(data: UserCreateDto): Promise<UserInfoDto> {
+    this.logger.log(`create User : ${data.name}(${data.email})`);
+    const user = toUser(data);
+    const result = await this.prisma.user.create({ data: user });
+    return toUserInfo(result);
   }
 
   async getUserByEmail(email: string): Promise<User | null> {
@@ -40,7 +50,7 @@ export class AuthService {
 
     const isPasswordValid = await this.cryptoService.validateHash(
       loginDto.password,
-      user.password,
+      user.password || '',
     );
 
     return isPasswordValid ? toUserInfo(user) : null;

@@ -1,24 +1,24 @@
-import { User } from "@prisma/client";
+import { User } from '@prisma/client';
 
 export interface UserCreateDto {
   name: string;
-  password: string;
-  passwordConfirm: string;
   email: string;
-  profile_image: string | null;
+  password?: string;
+  passwordConfirm?: string;
+  profile_image?: string | null;
 }
 
 export interface UserInfoDto {
   name: string;
   email: string;
-  profile_image: string | null;
+  profile_image?: string | null;
 }
 
 export interface UserDto {
   name: string;
-  password: string;
   email: string;
-  profile_image: string | null;
+  password?: string;
+  profile_image?: string | null;
 }
 
 export interface UserLoginDto {
