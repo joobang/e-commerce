@@ -10,7 +10,12 @@ import { GoogleStrategy } from '../../src/auth/strategy/google.strategy';
 import { GoogleRequest } from '../../src/auth/dto/google.user';
 import { Response } from 'express';
 import { INestApplication } from '@nestjs/common';
-import { UserDto } from "../../src/user/dto/user.dto";
+import {
+  UserDto,
+  UserInfoDto,
+  UserLoginDto,
+} from '../../src/user/dto/user.dto';
+import { CryptoService } from '../../src/common/crypto/crypto.service';
 
 // Google 사용자 인터페이스 정의
 interface GoogleUser {
@@ -34,7 +39,7 @@ describe('AuthController (unit)', () => {
   let authController: AuthController; // AuthController 인스턴스
   let authService: AuthService; // AuthService 인스턴스
   let jwtService: JwtService; // JwtService 인스턴스
-  let configService: ConfigService; // ConfigService 인스턴스
+  let cryptoService: CryptoService;
 
   // 모킹된 요청 객체
   const mockReq: MockGoogleRequest = {
@@ -57,12 +62,13 @@ describe('AuthController (unit)', () => {
     email: 'test@example.com',
     profile_image: 'https://test.com/photo.jpg',
     password: 'hashedpassword',
-    user_desc: null,
+    token: 'mockToken',
   };
 
   // 로그인 모킹 객체
-  const loginUser: Partial<UserDto> = {
+  const loginUser: UserLoginDto = {
     email: 'test@example.com',
+    password: '1234',
   };
 
   // 테스트 모듈 설정 및 Nest 애플리케이션 초기화
@@ -79,8 +85,15 @@ describe('AuthController (unit)', () => {
       providers: [
         AuthService,
         PrismaService,
-        JwtService,
-        ConfigService,
+        {
+          provide: JwtService,
+          useFactory: () => {
+            return new JwtService({
+              secret: process.env.JWT_SECRET || 'test-secret',
+            });
+          },
+        },
+        CryptoService,
         GoogleStrategy,
         GoogleAuthGuard,
       ],
@@ -90,7 +103,7 @@ describe('AuthController (unit)', () => {
     authController = module.get<AuthController>(AuthController);
     authService = module.get<AuthService>(AuthService);
     jwtService = module.get<JwtService>(JwtService);
-    configService = module.get<ConfigService>(ConfigService);
+    cryptoService = module.get<CryptoService>(CryptoService);
 
     // Nest 애플리케이션 인스턴스를 생성
     app = module.createNestApplication();
@@ -116,9 +129,8 @@ describe('AuthController (unit)', () => {
     beforeEach(async () => {
       // AuthService 메서드들을 모킹하여 반환값 설정
       jest.spyOn(authService, 'getUserByEmail').mockResolvedValueOnce(null);
-      jest.spyOn(authService, 'signUp').mockResolvedValueOnce(user);
+      jest.spyOn(authService, 'googleSignUp').mockResolvedValueOnce(user);
       jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
-      jest.spyOn(configService, 'get').mockReturnValue('https://example.com');
 
       // 테스트할 컨트롤러 메서드 호출
       await authController.googleAuthRedirect(
@@ -129,6 +141,7 @@ describe('AuthController (unit)', () => {
 
     // getUserByEmail 메서드 호출 확인
     it('should call getAdminUser with correct email', () => {
+      jest.spyOn(authService, 'getUserByEmail').mockResolvedValueOnce(user);
       expect(authService.getUserByEmail).toHaveBeenCalledWith(
         'test@example.com',
       );
@@ -136,11 +149,10 @@ describe('AuthController (unit)', () => {
 
     // signUp 메서드 호출 확인
     it('should call signUp with correct user data if user does not exist', () => {
-      expect(authService.signUp).toHaveBeenCalledWith({
+      expect(authService.googleSignUp).toHaveBeenCalledWith({
         name: 'Test User',
         email: 'test@example.com',
         profile_image: 'https://test.com/photo.jpg',
-        password: '1234',
       });
     });
 
@@ -154,28 +166,26 @@ describe('AuthController (unit)', () => {
     // res.redirect 메서드 호출 확인
     it('should call res.redirect with correct URL', () => {
       expect(mockRes.redirect).toHaveBeenCalledWith(
-        'https://google.com?token=token',
+        'https://google.com?token=mockToken',
       );
     });
   });
 
   describe('POST auth/login : login', () => {
     it('로그인 (user.email) 실패', async () => {
-      jest.spyOn(authService, 'getUserByEmail').mockResolvedValueOnce(null);
-      const response = await authController.login(loginUser as UserDto);
-      expect(authService.getUserByEmail).toHaveBeenCalledWith(
-        'test@example.com',
-      );
+      jest.spyOn(authService, 'login').mockResolvedValueOnce(null);
+
+      const response = await authController.login(loginUser);
+      expect(authService.login).toHaveBeenCalledWith(loginUser);
       expect(response.data).toBeNull();
     });
 
     it('로그인 (user.email) 성공', async () => {
       // user 데이어 모킹
-      jest.spyOn(authService, 'getUserByEmail').mockResolvedValueOnce(user);
-      const response = await authController.login(loginUser as UserDto);
-      expect(authService.getUserByEmail).toHaveBeenCalledWith(
-        'test@example.com',
-      );
+      jest.spyOn(authService, 'login').mockResolvedValueOnce(user);
+      jest.spyOn(jwtService, 'sign').mockReturnValue('mockToken');
+      const response = await authController.login(loginUser);
+      expect(authService.login).toHaveBeenCalledWith(loginUser);
       expect(response.data).toEqual(user);
     });
   });
@@ -188,6 +198,7 @@ describe('AuthController (unit)', () => {
 describe('AuthService (unit)', () => {
   let authService: AuthService; // AuthService 인스턴스
   let prismaService: PrismaService; // PrismaService 인스턴스
+  let cryptoService: CryptoService;
 
   // 모킹된 사용자 데이터
   const user = {
@@ -196,16 +207,33 @@ describe('AuthService (unit)', () => {
     email: 'test@example.com',
     profile_image: 'https://test.com/photo.jpg',
     password: 'hashedpassword',
-    user_desc: null,
+  };
+
+  const userInfo = {
+    id: 1,
+    name: 'Test User',
+    email: 'test@example.com',
+    profile_image: 'https://test.com/photo.jpg',
   };
 
   // 모킹된 UserDto 데이터
-  const userDto = {
+  const userCreateDto = {
     name: 'Test User',
     email: 'test@example.com',
     profile_image: 'https://test.com/photo.jpg',
     password: 'hashedpassword',
-    user_desc: null,
+  };
+
+  const userCreatedDto = {
+    id: undefined,
+    name: 'Test User',
+    email: 'test@example.com',
+    profile_image: 'https://test.com/photo.jpg',
+  };
+
+  const userLoginDto = {
+    email: 'test@example.com',
+    password: 'hashedpassword',
   };
   // 테스트 모듈 설정 및 Nest 애플리케이션 초기화
   beforeEach(async () => {
@@ -216,24 +244,28 @@ describe('AuthService (unit)', () => {
           provide: PrismaService,
           useValue: {
             user: {
-              create: jest.fn().mockReturnValue(user),
+              create: jest.fn().mockReturnValue(userCreateDto),
               findUnique: jest.fn().mockReturnValue(user),
             },
           },
         },
+        CryptoService,
       ],
     }).compile();
 
     // 테스트를 위해 인스턴스를 가져온다.
     authService = module.get<AuthService>(AuthService);
     prismaService = module.get<PrismaService>(PrismaService);
+    cryptoService = module.get<CryptoService>(CryptoService);
   });
 
   describe('signUp()', () => {
     it('should create a new user', async () => {
-      const result = await authService.signUp(userDto);
-      expect(result).toEqual(user);
-      expect(prismaService.user.create).toHaveBeenCalledWith({ data: userDto });
+      const result: UserInfoDto = await authService.signUp(userCreateDto);
+      expect(result).toEqual(userCreatedDto);
+      expect(prismaService.user.create).toHaveBeenCalledWith({
+        data: userCreateDto,
+      });
     });
   });
 
@@ -255,6 +287,22 @@ describe('AuthService (unit)', () => {
       expect(prismaService.user.findUnique).toHaveBeenCalledWith({
         where: { email: 'nonexistent@example.com' },
       });
+    });
+  });
+
+  describe('login()', () => {
+    it('login unit test', async () => {
+      jest.spyOn(cryptoService, 'validateHash').mockResolvedValue(true);
+      jest.spyOn(prismaService.user, 'findUnique').mockResolvedValueOnce(user);
+      const result = await authService.login(userLoginDto);
+      expect(prismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { email: userLoginDto.email },
+      });
+      expect(cryptoService.validateHash).toHaveBeenCalledWith(
+        userLoginDto.password,
+        user.password,
+      );
+      expect(result).toEqual(userInfo);
     });
   });
 });
