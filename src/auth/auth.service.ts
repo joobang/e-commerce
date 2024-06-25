@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { User } from '@prisma/client';
 import {
-  toUser,
   toUserInfo,
   UserCreateDto,
   UserInfoDto,
@@ -24,15 +23,13 @@ export class AuthService {
     if (data.password != null) {
       data.password = await this.cryptoService.generateHash(data.password);
     }
-    const user = toUser(data);
-    const result = await this.prisma.user.create({ data: user });
+    const result = await this.prisma.user.create({ data });
     return toUserInfo(result);
   }
 
   async googleSignUp(data: UserCreateDto): Promise<UserInfoDto> {
     this.logger.log(`create User : ${data.name}(${data.email})`);
-    const user = toUser(data);
-    const result = await this.prisma.user.create({ data: user });
+    const result = await this.prisma.user.create({ data });
     return toUserInfo(result);
   }
 

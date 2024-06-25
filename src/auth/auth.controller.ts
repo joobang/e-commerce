@@ -1,10 +1,8 @@
 import {
-  BadRequestException,
   Body,
   Controller,
   Get,
   Logger,
-  Param,
   Post,
   Query,
   Req,
@@ -17,12 +15,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { GoogleRequest } from './dto/google.user';
-import {
-  toUser,
-  UserCreateDto,
-  UserInfoDto,
-  UserLoginDto,
-} from '../user/dto/user.dto';
+import { UserCreateDto, UserInfoDto, UserLoginDto } from '../user/dto/user.dto';
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -50,7 +43,6 @@ export class AuthController {
   @UseGuards(GoogleAuthGuard)
   async googleAuthRedirect(@Req() req: GoogleRequest, @Res() res: Response) {
     this.logger.log('GET oauth2/redirect/google - googleAuthRedirect 실행');
-    // TODO: 구글 로그인 시 바로 user 생성 -> 유저 정보 리턴으로 변경해야함.
     const { user: googleUser } = req;
     // 아이디가 존재하는지 확인
     // 없으면 가입

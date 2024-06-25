@@ -9,12 +9,14 @@ export interface UserCreateDto {
 }
 
 export interface UserInfoDto {
+  id: number;
   name: string;
   email: string;
   profile_image?: string | null;
 }
 
 export interface UserDto {
+  id: number;
   name: string;
   email: string;
   password?: string;
@@ -26,12 +28,11 @@ export interface UserLoginDto {
   password: string;
 }
 
-export function toUser(userCreateDto: UserCreateDto): UserDto {
-  const { passwordConfirm, ...userDto } = userCreateDto;
-  return userDto;
-}
-
 export function toUserInfo(user: User): UserInfoDto {
-  const { password, ...userInfoDto } = user;
-  return userInfoDto;
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    profile_image: user.profile_image,
+  };
 }
