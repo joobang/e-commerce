@@ -1,3 +1,5 @@
+import { User } from "@prisma/client";
+
 export interface UserCreateDto {
   name: string;
   password: string;
@@ -19,7 +21,17 @@ export interface UserDto {
   profile_image: string | null;
 }
 
-export function toUser(userCreateDto: UserCreateDto) {
+export interface UserLoginDto {
+  email: string;
+  password: string;
+}
+
+export function toUser(userCreateDto: UserCreateDto): UserDto {
   const { passwordConfirm, ...userDto } = userCreateDto;
   return userDto;
+}
+
+export function toUserInfo(user: User): UserInfoDto {
+  const { password, ...userInfoDto } = user;
+  return userInfoDto;
 }

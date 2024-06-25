@@ -17,7 +17,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { GoogleRequest } from './dto/google.user';
-import { toUser, UserCreateDto, UserInfoDto } from '../user/dto/user.dto';
+import { toUser, UserCreateDto, UserInfoDto, UserLoginDto } from "../user/dto/user.dto";
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -72,15 +72,15 @@ export class AuthController {
 
   @Post('login')
   async login(
-    @Body() userInfoDto: UserInfoDto,
+    @Body() userLoginDto: UserLoginDto,
   ): Promise<ApiResponseDto<UserInfoDto>> {
     this.logger.log('POST auth/login');
     //TODO: 로그인 요청시 비밀번호 확인
-    const user = await this.authService.getUserByEmail(userInfoDto.email);
+    const user = await this.authService.login(userLoginDto);
     if (user) {
       return createSuccessResponse<UserInfoDto>(user);
     } else {
-      return createErrorResponse(400, 'not found user');
+      return createErrorResponse(400, 'check email Or password');
     }
   }
 
