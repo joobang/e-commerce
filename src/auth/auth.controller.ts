@@ -17,7 +17,12 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { Request, Response } from 'express';
 import { GoogleRequest } from './dto/google.user';
-import { toUser, UserCreateDto, UserInfoDto, UserLoginDto } from "../user/dto/user.dto";
+import {
+  toUser,
+  UserCreateDto,
+  UserInfoDto,
+  UserLoginDto,
+} from '../user/dto/user.dto';
 import {
   createErrorResponse,
   createSuccessResponse,
@@ -77,7 +82,13 @@ export class AuthController {
     this.logger.log('POST auth/login');
     const user = await this.authService.login(userLoginDto);
     if (user) {
-      return createSuccessResponse<UserInfoDto>(user);
+      const token = this.jwtService.sign({
+        email: user.email,
+      });
+      return createSuccessResponse<UserInfoDto & { token: string }>({
+        ...user,
+        token,
+      });
     } else {
       return createErrorResponse(400, 'check email Or password');
     }
