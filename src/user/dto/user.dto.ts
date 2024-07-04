@@ -5,22 +5,20 @@ export interface UserCreateDto {
   email: string;
   password?: string;
   passwordConfirm?: string;
-  profile_image?: string | null;
+  profileImage?: string | null;
+  phoneNumber?: string;
+  birthDate?: Date;
+  signupDate?: Date;
 }
 
 export interface UserInfoDto {
-  id: number;
+  userId: number;
   name: string;
   email: string;
-  profile_image?: string | null;
-}
-
-export interface UserDto {
-  id: number;
-  name: string;
-  email: string;
-  password?: string;
-  profile_image?: string | null;
+  phoneNumber: string | null;
+  birthDate?: Date | null;
+  signupDate: Date;
+  profileImage?: string | null;
 }
 
 export interface UserLoginDto {
@@ -30,9 +28,13 @@ export interface UserLoginDto {
 
 export function toUserInfo(user: User): UserInfoDto {
   return {
-    id: user.id,
+    userId: user.userId,
     name: user.name,
     email: user.email,
-    profile_image: user.profile_image,
+    profileImage: user.profileImage,
+    phoneNumber: user.phoneNumber,
+    birthDate: user.birthDate,
+    signupDate: user.signupDate,
   };
 }
+

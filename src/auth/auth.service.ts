@@ -18,12 +18,21 @@ export class AuthService {
     private cryptoService: CryptoService,
   ) {}
 
-  async signUp(data: UserCreateDto): Promise<UserInfoDto> {
-    this.logger.log(`create User : ${data.name}(${data.email})`);
-    if (data.password != null) {
-      data.password = await this.cryptoService.generateHash(data.password);
+  async signUp(userCreateDto: UserCreateDto): Promise<UserInfoDto> {
+    this.logger.log(
+      `create User : ${userCreateDto.name}(${userCreateDto.email})`,
+    );
+    if (userCreateDto.password != null) {
+      userCreateDto.password = await this.cryptoService.generateHash(
+        userCreateDto.password,
+      );
     }
-    const result = await this.prisma.user.create({ data });
+    const { passwordConfirm, ...data } = userCreateDto;
+    const result = await this.prisma.user.create({
+      data: {
+        ...data,
+      },
+    });
     return toUserInfo(result);
   }
 
