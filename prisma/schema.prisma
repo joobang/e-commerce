@@ -14,9 +14,21 @@ datasource db {
 }
 
 model User {
-  id    Int     @default(autoincrement()) @id
+  userId    Int     @map("user_id") @default(autoincrement()) @id
   email String  @unique
   name String
+  phoneNumber String @map("phone_number")
   password String?
-  profile_image String?
+  profileImage String? @map("profile_image")
+  birthDate       DateTime? @map("birth_date")
+  signupDate        DateTime  @default(now()) @map("signup_date")
+  addresses         Address[]
+}
+
+model Address {
+  addressId    Int      @map("address_id") @id @default(autoincrement())
+  user         User     @relation(fields: [userId], references: [userId])
+  userId       Int      @map("user_id")
+  address      String
+  isDefault    Boolean
 }
