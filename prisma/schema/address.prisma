@@ -1,0 +1,8 @@
+
+model Address {
+  addressId    Int      @map("address_id") @id @default(autoincrement())
+  user         User     @relation(fields: [userId], references: [userId])
+  userId       Int      @map("user_id")
+  address      String
+  isDefault    Boolean
+}

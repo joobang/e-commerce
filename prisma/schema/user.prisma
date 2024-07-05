@@ -1,0 +1,11 @@
+model User {
+  userId    Int     @map("user_id") @default(autoincrement()) @id
+  email String  @unique
+  name String
+  phoneNumber String? @map("phone_number")
+  password String?
+  profileImage String? @map("profile_image")
+  birthDate       DateTime? @map("birth_date")
+  signupDate        DateTime  @default(now()) @map("signup_date")
+  addresses         Address[]
+}

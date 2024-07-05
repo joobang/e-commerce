@@ -10,12 +10,9 @@ import { GoogleStrategy } from '../../src/auth/strategy/google.strategy';
 import { GoogleRequest } from '../../src/auth/dto/google.user';
 import { Response } from 'express';
 import { INestApplication } from '@nestjs/common';
-import {
-  UserDto,
-  UserInfoDto,
-  UserLoginDto,
-} from '../../src/user/dto/user.dto';
+import { UserInfoDto, UserLoginDto } from '../../src/user/dto/user.dto';
 import { CryptoService } from '../../src/common/crypto/crypto.service';
+import { DateTime } from 'luxon';
 
 // Google 사용자 인터페이스 정의
 interface GoogleUser {
@@ -54,15 +51,18 @@ describe('AuthController (unit)', () => {
   const mockRes: MockResponse = {
     redirect: jest.fn(),
   };
-
+  const now = DateTime.now();
   // 모킹된 사용자 데이터
   const user = {
-    id: 1,
+    userId: 1,
     name: 'Test User',
     email: 'test@example.com',
-    profile_image: 'https://test.com/photo.jpg',
+    profileImage: 'https://test.com/photo.jpg',
     password: 'hashedpassword',
     token: 'mockToken',
+    phoneNumber: '01062206697',
+    birthDate: now.toJSDate(),
+    signupDate: now.toJSDate(),
   };
 
   // 로그인 모킹 객체
@@ -152,7 +152,7 @@ describe('AuthController (unit)', () => {
       expect(authService.googleSignUp).toHaveBeenCalledWith({
         name: 'Test User',
         email: 'test@example.com',
-        profile_image: 'https://test.com/photo.jpg',
+        profileImage: 'https://test.com/photo.jpg',
       });
     });
 
@@ -200,37 +200,44 @@ describe('AuthService (unit)', () => {
   let prismaService: PrismaService; // PrismaService 인스턴스
   let cryptoService: CryptoService;
 
+  const now = DateTime.now();
   // 모킹된 사용자 데이터
   const user = {
-    id: 1,
+    userId: 1,
     name: 'Test User',
     email: 'test@example.com',
-    profile_image: 'https://test.com/photo.jpg',
+    profileImage: 'https://test.com/photo.jpg',
     password: 'hashedpassword',
+    phoneNumber: '01062206697',
+    birthDate: now.toJSDate(),
+    signupDate: now.toJSDate(),
   };
 
   const userInfo = {
-    id: 1,
+    userId: 1,
     name: 'Test User',
     email: 'test@example.com',
-    profile_image: 'https://test.com/photo.jpg',
+    profileImage: 'https://test.com/photo.jpg',
+    phoneNumber: '01062206697',
+    birthDate: now.toJSDate(),
+    signupDate: now.toJSDate(),
+  };
+  const userCreated = {
+    name: 'Test User',
+    email: 'test@example.com',
+    profileImage: 'https://test.com/photo.jpg',
+    phoneNumber: '01062206697',
+    signupDate: undefined,
   };
 
   // 모킹된 UserDto 데이터
   const userCreateDto = {
     name: 'Test User',
     email: 'test@example.com',
-    profile_image: 'https://test.com/photo.jpg',
+    profileImage: 'https://test.com/photo.jpg',
     password: 'hashedpassword',
+    phoneNumber: '01062206697',
   };
-
-  const userCreatedDto = {
-    id: undefined,
-    name: 'Test User',
-    email: 'test@example.com',
-    profile_image: 'https://test.com/photo.jpg',
-  };
-
   const userLoginDto = {
     email: 'test@example.com',
     password: 'hashedpassword',
@@ -262,7 +269,7 @@ describe('AuthService (unit)', () => {
   describe('signUp()', () => {
     it('should create a new user', async () => {
       const result: UserInfoDto = await authService.signUp(userCreateDto);
-      expect(result).toEqual(userCreatedDto);
+      expect(result).toEqual(userCreated);
       expect(prismaService.user.create).toHaveBeenCalledWith({
         data: userCreateDto,
       });

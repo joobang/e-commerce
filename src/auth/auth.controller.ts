@@ -53,7 +53,7 @@ export class AuthController {
       await this.authService.googleSignUp({
         name: googleUser.username,
         email: googleUser.email,
-        profile_image: googleUser.photo,
+        profileImage: googleUser.photo,
       }); // DB에 저장
     }
     const token = this.jwtService.sign({

@@ -33,12 +33,12 @@ describe('Auth (e2e)', () => {
     it('DB 유저 생성 확인', async () => {
       // 데이터베이스에서 사용자 확인
       const user = await prisma.user.findUnique({
-        where: { email: 'ehwnghks@gmail.com' },
+        where: { email: 'ehwnghks@naver.com' },
       });
 
       expect(user).not.toBeNull();
       if (user) {
-        expect(user.email).toEqual('ehwnghks@gmail.com');
+        expect(user.email).toEqual('ehwnghks@naver.com');
       }
     });
   });
