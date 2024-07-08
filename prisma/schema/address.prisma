@@ -1,8 +1,12 @@
 
 model Address {
-  addressId    Int      @map("address_id") @id @default(autoincrement())
-  user         User     @relation(fields: [userId], references: [userId])
-  userId       Int      @map("user_id")
-  address      String
-  isDefault    Boolean
+  addressId   Int      @map("address_id") @id @default(autoincrement())
+  user        User     @relation(fields: [userId], references: [userId])
+  userId      Int      @map("user_id")
+  address     String
+  status      String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("address")
 }
