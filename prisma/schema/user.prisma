@@ -7,5 +7,10 @@ model User {
   profileImage String? @map("profile_image")
   birthDate       DateTime? @map("birth_date")
   signupDate        DateTime  @default(now()) @map("signup_date")
+  status  String?
   addresses         Address[]
+  carts     Cart[]
+  orders    Order[]
+
+  @@map("users")
 }

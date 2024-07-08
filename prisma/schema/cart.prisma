@@ -1,0 +1,11 @@
+
+model Cart {
+  cartId   Int      @map("cart_id") @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  productId   Int @map("product_id")
+  status      String
+  quantity Int
+  user     User     @relation(fields: [userId], references: [userId])
+  product  Product   @relation(fields: [productId], references: [productId])
+  @@map("carts")
+}

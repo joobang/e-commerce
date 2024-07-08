@@ -1,4 +1,5 @@
 import { User } from '@prisma/client';
+import { UserStatus } from '../constant/user.status';
 
 export interface UserCreateDto {
   name: string;
@@ -9,6 +10,7 @@ export interface UserCreateDto {
   phoneNumber?: string;
   birthDate?: Date;
   signupDate?: Date;
+  status?: UserStatus;
 }
 
 export interface UserInfoDto {
@@ -19,6 +21,7 @@ export interface UserInfoDto {
   birthDate?: Date | null;
   signupDate: Date;
   profileImage?: string | null;
+  status?: string | null;
 }
 
 export interface UserLoginDto {
@@ -35,6 +38,6 @@ export function toUserInfo(user: User): UserInfoDto {
     phoneNumber: user.phoneNumber,
     birthDate: user.birthDate,
     signupDate: user.signupDate,
+    status: user.status,
   };
 }
-
