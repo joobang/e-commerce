@@ -1,0 +1,19 @@
+
+model Product {
+  productId Int @map("product_id") @id @default(autoincrement())
+  brandId      Int @map("brand_id")
+  name         String
+  mainCategory String @map("main_category")
+  subCategory  String @map("sub_category")
+  description  String?
+  price        Float
+  stockQuantity Int @map("stock_quantity")
+  status      String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  brand        Brand     @relation(fields: [brandId], references: [brandId])
+  carts    Cart[]
+  orderItems   OrderItem[]
+
+  @@map("products")
+}

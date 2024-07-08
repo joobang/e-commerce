@@ -1,0 +1,14 @@
+
+model Order {
+  orderId   Int      @map("order_id") @id @default(autoincrement())
+  userId      Int      @map("user_id")
+  addressId   Int   @map("address_id")
+  totalPrice  Float    @map("total_price")
+  status      String
+  orderItems  OrderItem[]
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  address     Address  @relation(fields: [addressId], references: [addressId])
+  user        User     @relation(fields: [userId], references: [userId])
+  @@map("orders")
+}
