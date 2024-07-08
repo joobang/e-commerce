@@ -8,6 +8,7 @@ import {
   UserLoginDto,
 } from '../user/dto/user.dto';
 import { CryptoService } from '../common/crypto/crypto.service';
+import { UserStatus } from "../user/constant/user.status";
 
 @Injectable()
 export class AuthService {
@@ -31,6 +32,7 @@ export class AuthService {
     const result = await this.prisma.user.create({
       data: {
         ...data,
+        status: UserStatus.CREATED,
       },
     });
     return toUserInfo(result);
@@ -38,7 +40,12 @@ export class AuthService {
 
   async googleSignUp(data: UserCreateDto): Promise<UserInfoDto> {
     this.logger.log(`create User : ${data.name}(${data.email})`);
-    const result = await this.prisma.user.create({ data });
+    const result = await this.prisma.user.create({
+      data: {
+        ...data,
+        status: UserStatus.CREATED,
+      },
+    });
     return toUserInfo(result);
   }
 

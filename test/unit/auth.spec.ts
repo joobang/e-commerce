@@ -13,6 +13,7 @@ import { INestApplication } from '@nestjs/common';
 import { UserInfoDto, UserLoginDto } from '../../src/user/dto/user.dto';
 import { CryptoService } from '../../src/common/crypto/crypto.service';
 import { DateTime } from 'luxon';
+import { UserStatus } from "../../src/user/constant/user.status";
 
 // Google 사용자 인터페이스 정의
 interface GoogleUser {
@@ -61,6 +62,7 @@ describe('AuthController (unit)', () => {
     password: 'hashedpassword',
     token: 'mockToken',
     phoneNumber: '01062206697',
+    status: 'test',
     birthDate: now.toJSDate(),
     signupDate: now.toJSDate(),
   };
@@ -209,6 +211,7 @@ describe('AuthService (unit)', () => {
     profileImage: 'https://test.com/photo.jpg',
     password: 'hashedpassword',
     phoneNumber: '01062206697',
+    status: UserStatus.CREATED,
     birthDate: now.toJSDate(),
     signupDate: now.toJSDate(),
   };
@@ -221,13 +224,17 @@ describe('AuthService (unit)', () => {
     phoneNumber: '01062206697',
     birthDate: now.toJSDate(),
     signupDate: now.toJSDate(),
+    status: UserStatus.CREATED,
   };
   const userCreated = {
+    userId: 1,
     name: 'Test User',
     email: 'test@example.com',
     profileImage: 'https://test.com/photo.jpg',
     phoneNumber: '01062206697',
-    signupDate: undefined,
+    birthDate: now.toJSDate(),
+    signupDate: now.toJSDate(),
+    status: UserStatus.CREATED,
   };
 
   // 모킹된 UserDto 데이터
@@ -251,7 +258,7 @@ describe('AuthService (unit)', () => {
           provide: PrismaService,
           useValue: {
             user: {
-              create: jest.fn().mockReturnValue(userCreateDto),
+              create: jest.fn().mockReturnValue(userCreated),
               findUnique: jest.fn().mockReturnValue(user),
             },
           },
@@ -271,7 +278,7 @@ describe('AuthService (unit)', () => {
       const result: UserInfoDto = await authService.signUp(userCreateDto);
       expect(result).toEqual(userCreated);
       expect(prismaService.user.create).toHaveBeenCalledWith({
-        data: userCreateDto,
+        data: { ...userCreateDto, status: UserStatus.CREATED},
       });
     });
   });
